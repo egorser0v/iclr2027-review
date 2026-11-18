@@ -111,6 +111,7 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 | Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
 |---|---:|---:|---:|
 | Ours (empirical eigenbasis + GP) | 0.1406 | 1.1025 | 2.763 |
+| TSFlow (locally reproduced) | 0.1578 | 1.1926 | 663.046 (estimated) |
 | DLinear | 0.2054 | 1.3466 | 1.456 |
 | TiDE | 0.1751 | 1.3677 | 0.341 |
 | PatchTST | 0.1449 | 1.1488 | 11.653 |
@@ -119,9 +120,11 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 | TiRex (zero-shot) | 0.1205 | 0.9936 | — |
 | TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
 
-All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Each forecast uses 20 velocity-field evaluations per trajectory and 100 draws. External accuracy scores come from the published GIFT-Eval results.
+All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Our forecasts use 20 velocity-field evaluations per trajectory and 100 draws. TSFlow is locally reproduced on all 54 tasks using seed 6432: we select among OU, squared-exponential, and periodic kernels by the best validation wQL through epoch 40, then continue the selected kernel to 400 total epochs. Its model, optimizer, EMA, gradient clipping, normalization, and sampling settings follow the original TSFlow recipe; early kernel selection and single-seed evaluation define this campaign's budget. The other external accuracy scores come from the published GIFT-Eval results.
 
-Training profiles cover a forward pass, loss computation, and backward pass for one univariate window at batch size one. They include our prior conditioning, sampling, and coordinate transforms. Optimizer updates and one-time preparation are excluded. Baseline costs use profiled reference architectures and context lengths. Accuracy scores follow the published evaluation recipes. The pretrained models require no task-specific training, so their entries are blank in this column. They rely on substantial computation already invested in pretraining. That cost is separate from the task-specific training measured here.
+Our correction achieves 10.86% lower aggregate wQL and 7.55% lower aggregate MASE than this TSFlow reproduction on the complete shared panel.
+
+Training profiles cover a forward pass, loss computation, and backward pass for one univariate window at batch size one. They include our prior conditioning, sampling, and coordinate transforms. TSFlow uses its final selected kernels and native training loss, including GP conditioning and factorization; S4 arithmetic uses a dense Cauchy reference and analytical FFT estimates. Shared S4 kernel generation and GP factorization are counted once per window at batch one and amortize over larger batches. Optimizer updates, clipping, EMA, validation, and one-time preparation are excluded. Other task-trained baseline costs use profiled reference architectures and context lengths. Accuracy scores follow the published evaluation recipes. The pretrained models require no task-specific training, so their entries are blank in this column. They rely on substantial computation already invested in pretraining. That cost is separate from the task-specific training measured here.
 
 A strong statistical forecast lets a small learned correction reach accuracy competitive with PatchTST and TFT at substantially lower profiled training cost. The aggregate accuracy gains are modest, and performance varies across tasks. The component controls give the clearest evidence for the approach: the correction improves the starting forecast itself. The pretrained models achieve stronger accuracy and require no downstream training.
 
