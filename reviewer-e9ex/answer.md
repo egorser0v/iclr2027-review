@@ -18,7 +18,7 @@ Let $K$ be a fixed positive-definite covariance and $\Phi$ an orthogonal basis. 
 The original analysis applied the second-moment scaling incorrectly. Thank you for catching this error. We have corrected the analysis and will replace Proposition 2 and its interpretation. Adam divides gradients by the square root of the second moment. Under the Kronecker model (Balles & Hennig, 2018), the resulting matrix is $M_{\text{Adam}} = D^{1/2} A D^{1/2}$, where $D = \operatorname{diag}(A)^{-1/2}$. The original analysis used $DAD$.
 We use this matrix as a frozen input-curvature surrogate. Actual Adam also depends on residuals, momentum, and evolving second moments. In the eigenbasis, the corrected surrogate has condition number $\sqrt{\kappa(A)}$.
 
-In time coordinates ($\Phi=I$), a stationary grid gives a constant covariance diagonal. Thus $D\propto I$: the condition number stays at $\kappa(A)$, and off-diagonal coupling remains.
+In time coordinates, the covariance can retain strong off-diagonal dependencies. In the Mercer basis, the prior covariance is diagonal. However, this does not imply that AdamW achieves optimal conditioning, especially on the conditional training interpolants.
 
 In the Mercer basis, $\Phi^\top K\Phi=\Lambda$ is diagonal. The corrected scaling gives condition number $\sqrt{\kappa(A)}$ and zero off-diagonal prior covariance. If only $k$ directions are retained, the condition number is $\sqrt{\lambda_1/\lambda_k}$. The benefit therefore depends on the retained spectrum. Whitening also rescales the directions. It changes their loss weights unless the loss is adjusted.
 
@@ -60,9 +60,9 @@ Table 2: Controlled truncation study on non-stationary modulated periodic data (
 
 | Basis | $k=6$ CRPS $\downarrow$ (Gap $\uparrow$) | $k=10$ CRPS $\downarrow$ (Gap $\uparrow$) | $k=16$ CRPS $\downarrow$ (Gap $\uparrow$) | $k=32$ (Full) CRPS $\downarrow$ (Gap $\uparrow$) |
 |:---|:---:|:---:|:---:|:---:|
-| Mercer (Ours) | 0\.1619 (40\.0%) | 0\.0768 (76\.0%) | 0\.0597 (83\.2%) | 0\.0531 (86.0%) |
+| Mercer (Ours) | 0\.1619 (40.0%) | 0\.0768 (76.0%) | 0\.0597 (83.2%) | 0\.0531 (86.0%) |
 | PCA | 0\.1660 (38.3%) | 0\.0884 (71.1%) | 0\.0613 (82.5%) | 0\.0547 (85.3%) |
-| DCT | 0\.2315 (10.6%) | 0\.2140 (18.0%) | 0\.1834 (30.9%) | 0\.0528 (86\.1%) |
+| DCT | 0\.2315 (10.6%) | 0\.2140 (18.0%) | 0\.1834 (30.9%) | 0\.0528 (86.1%) |
 | Fourier | 0\.2304 (11.0%) | 0\.2167 (16.8%) | 0\.1839 (30.7%) | 0\.0543 (85.5%) |
 | Raw | 0\.2331 (9.9%) | 0\.2180 (16.3%) | 0\.1819 (31.6%) | 0\.0546 (85.4%) |
 
@@ -92,11 +92,11 @@ The controls use the same 54 tasks and equal-weight geometric mean wQL.
 
 | Method | Geom. mean wQL ↓ |
 |---|---:|
-| GP-only (statistical forecast) | 0.163321 |
-| Raw-noise (correction from independent noise) | 0.156343 |
-| Raw-GP (prior + correction in time coordinates) | 0.141639 |
-| Ours (prior + correction in its eigenbasis) | 0.140626 |
-| Ours, half input/output ranks (width 192) | 0.142803 |
+| GP-only (statistical forecast) | 0\.163321 |
+| Raw-noise (correction from independent noise) | 0\.156343 |
+| Raw-GP (prior + correction in time coordinates) | 0\.141639 |
+| Ours (prior + correction in its eigenbasis) | 0\.140626 |
+| Ours, half input/output ranks (width 192) | 0\.142803 |
 
 Halving the input and correction output ranks at width 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank accuracy.
 
@@ -110,14 +110,14 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 
 | Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
 |---|---:|---:|---:|
-| Ours (empirical eigenbasis + GP) | 0.1406 | 1.1025 | 2.763 |
-| DLinear | 0.2054 | 1.3466 | 1.456 |
-| TiDE | 0.1751 | 1.3677 | 0.341 |
-| PatchTST | 0.1449 | 1.1488 | 11.653 |
-| TFT | 0.1420 | 1.1521 | 71.051 |
-| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | — |
-| TiRex (zero-shot) | 0.1205 | 0.9936 | — |
-| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
+| Ours (empirical eigenbasis + GP) | 0\.1406 | 1\.1025 | 2\.763 |
+| DLinear | 0\.2054 | 1\.3466 | 1\.456 |
+| TiDE | 0\.1751 | 1\.3677 | 0\.341 |
+| PatchTST | 0\.1449 | 1\.1488 | 11\.653 |
+| TFT | 0\.1420 | 1\.1521 | 71\.051 |
+| Chronos-2 (zero-shot) | 0\.1189 | 0\.9829 | -- |
+| TiRex (zero-shot) | 0\.1205 | 0\.9936 | -- |
+| TimesFM-2.5 (zero-shot) | 0\.1207 | 0\.9895 | -- |
 
 All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Each forecast uses 20 velocity-field evaluations per trajectory and 100 draws. External accuracy scores come from the published GIFT-Eval results.
 

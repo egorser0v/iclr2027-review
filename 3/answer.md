@@ -14,7 +14,9 @@ The forecasting comparisons measure how much the correction adds to the starting
 ### W1: Contribution beyond a coordinate rotation
 
 We added a synthetic variant that learns a correction in fewer directions. The starting GP forecast $y_0\sim\mathcal{N}(\mu,\Sigma)$ stays at full resolution. The MLP operates in the top $k$ eigenvectors $\Phi_k\in\mathbb{R}^{L_f\times k}$ of the conditional future covariance $\boldsymbol{\Sigma}$:
+
 $$\hat{y}_f = y_0 + \Phi_k (\hat{c}_1 - c_0).$$
+
 At full rank ($k=L_f$), changing the basis preserves the possible corrections. At reduced rank ($k\ll L_f$), the basis selects which directions the model can correct. This restriction can also regularize learning.
 
 Here $\mu$ and $\Sigma$ are the conditional forecast's mean and covariance. The horizon length is $L_f$, and $k$ is the correction rank. The starting coordinates are $c_0=\Phi_k^\top y_0$, and $\hat c_1$ is their learned endpoint. The network is a multilayer perceptron (MLP).
@@ -26,12 +28,12 @@ We report the continuous ranked probability score (CRPS), which measures probabi
 Table 1: Effect of truncation rank $k$ on non-stationary modulated periodic data ($L_f=32$, GP Prior CRPS = 0.2565, Oracle = 0.0200).
 
 | Basis | $k=4$ CRPS $\downarrow$ | $k=6$ CRPS $\downarrow$ | $k=10$ CRPS $\downarrow$ (Gap $\uparrow$) | $k=32$ (Full) CRPS $\downarrow$ |
-| :--- | :---: | :---: | :---: | :---: |
-| Mercer (Ours) | 0.1926 | 0.1619 | 0.0768 (76.0%) | 0.0531 |
-| PCA | 0.1959 | 0.1660 | 0.0884 (71.1%) | 0.0547 |
-| DCT | 0.2385 | 0.2315 | 0.2140 (18.0%) | 0.0528 |
-| Fourier | 0.2421 | 0.2304 | 0.2167 (16.8%) | 0.0543 |
-| Raw | 0.2411 | 0.2331 | 0.2180 (16.3%) | 0.0546 |
+|:---|:---:|:---:|:---:|:---:|
+| Mercer (Ours) | 0\.1926 | 0\.1619 | 0\.0768 (76.0%) | 0\.0531 |
+| PCA | 0\.1959 | 0\.1660 | 0\.0884 (71.1%) | 0\.0547 |
+| DCT | 0\.2385 | 0\.2315 | 0\.2140 (18.0%) | 0\.0528 |
+| Fourier | 0\.2421 | 0\.2304 | 0\.2167 (16.8%) | 0\.0543 |
+| Raw | 0\.2411 | 0\.2331 | 0\.2180 (16.3%) | 0\.0546 |
 
 At full rank, forecast errors are close across bases. With ten correction directions, Mercer reaches CRPS 0.0768, compared with 0.2140–0.2180 for DCT, Fourier, and Raw. The error is nearly three times lower. Here the basis determines which corrections the smaller model can learn.
 
@@ -85,11 +87,11 @@ The matched controls below use the same 54 tasks and equal-weight geometric mean
 
 | Method | Geom. mean wQL ↓ |
 |---|---:|
-| GP-only (statistical forecast) | 0.163321 |
-| Raw-noise (correction from independent noise) | 0.156343 |
-| Raw-GP (prior + correction in time coordinates) | 0.141639 |
-| Ours (prior + correction in its eigenbasis) | 0.140626 |
-| Ours, half input/output ranks (width 192) | 0.142803 |
+| GP-only (statistical forecast) | 0\.163321 |
+| Raw-noise (correction from independent noise) | 0\.156343 |
+| Raw-GP (prior + correction in time coordinates) | 0\.141639 |
+| Ours (prior + correction in its eigenbasis) | 0\.140626 |
+| Ours, half input/output ranks (width 192) | 0\.142803 |
 
 Halving both the input and correction output ranks while keeping the network width at 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank model's accuracy.
 
@@ -103,14 +105,14 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 
 | Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
 |---|---:|---:|---:|
-| Ours (empirical eigenbasis + GP) | 0.1406 | 1.1025 | 2.763 |
-| DLinear | 0.2054 | 1.3466 | 1.456 |
-| TiDE | 0.1751 | 1.3677 | 0.341 |
-| PatchTST | 0.1449 | 1.1488 | 11.653 |
-| TFT | 0.1420 | 1.1521 | 71.051 |
-| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | — |
-| TiRex (zero-shot) | 0.1205 | 0.9936 | — |
-| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
+| Ours (empirical eigenbasis + GP) | 0\.1406 | 1\.1025 | 2\.763 |
+| DLinear | 0\.2054 | 1\.3466 | 1\.456 |
+| TiDE | 0\.1751 | 1\.3677 | 0\.341 |
+| PatchTST | 0\.1449 | 1\.1488 | 11\.653 |
+| TFT | 0\.1420 | 1\.1521 | 71\.051 |
+| Chronos-2 (zero-shot) | 0\.1189 | 0\.9829 | -- |
+| TiRex (zero-shot) | 0\.1205 | 0\.9936 | -- |
+| TimesFM-2.5 (zero-shot) | 0\.1207 | 0\.9895 | -- |
 
 All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Each forecast uses 20 velocity-field evaluations per trajectory and 100 draws. External accuracy scores come from the published GIFT-Eval results.
 
