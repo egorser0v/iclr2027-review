@@ -32,9 +32,11 @@ Table 1: Performance on non-Gaussian synthetic dynamical systems ($L_f=32$; CRPS
 | Bimodal Double-Well SDE ($k=12$, high learning rate) | 0\.3647 | 0\.2349 | 0\.2489 (89.2%) | 0\.2493 (88.9%) | 0\.2496 (88.7%) | 0\.2511 (87.5%) | 0\.3647 (0.0%) |
 | Modulated Nonlinear Periodic ($k=10$) | 0\.2565 | 0\.0200 | 0\.0768 (76.0%) | 0\.0884 (71.1%) | 0\.2140 (18.0%) | 0\.2167 (16.8%) | 0\.2180 (16.3%) |
 
-The correction improves the Gaussian forecast on both bimodal and skewed dynamics, closing up to 89% of the prior-to-oracle gap. The largest differences between bases appear in the nonstationary low-rank example. Raw fails in the double-well experiment at the stated high learning rate. That result concerns stability under this training setting.
+On the bimodal Double-Well SDE, Mercer, PCA, DCT, and Fourier achieve similar CRPS, with Mercer obtaining the lowest numerical value (0.2489). All four representations substantially improve the GP prior, closing approximately 88–89% of the prior-to-oracle gap. Raw shows no improvement under the high learning rate used in this experiment.
 
-These examples show how a Gaussian starting forecast can be corrected toward a non-Gaussian target. The application studied here is time-series forecasting. The 54-task GIFT-Eval benchmark adds coverage across datasets, frequencies, and horizons.
+In contrast, the nonlinear periodic example shows much larger differences between representations. At k=10, Mercer achieves a CRPS of 0.0768, compared with 0.2140 for DCT and 0.2167 for Fourier.
+
+These results suggest that the benefit of the Mercer basis depends on the structure of the dynamics and the selected correction subspace.
 
 ---
 
@@ -44,7 +46,7 @@ These examples show how a Gaussian starting forecast can be corrected toward a n
 
 We added radial basis function (RBF) and Matérn-5/2 kernels to test smoother priors. We vary training sample size ($N\in\{64,512\}$) and correction rank ($k=6$ or full rank $k=32$). We also test whitening, which divides each coordinate by the square root of its covariance eigenvalue. This amplifies directions with small prior variance.
 
-For these smooth kernels, six directions capture almost all conditional future variance: 99.97% for RBF and 99.67% for Matérn-5/2. The remaining 26 directions lie near the noise floor.
+For these smooth kernels, six directions capture almost all conditional future variance: 99.97% for RBF and 99.67% for Matérn-5/2. The remaining 26 directions account for only a small fraction of the total prior variance.
 
 Table 2: Smooth kernel ablation (`RBF` and `Matérn-5/2`, $L_f=32$; CRPS $\downarrow$ and % Oracle Gap Closed $\uparrow$).
 
@@ -89,15 +91,15 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 
 | Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
 |---|---:|---:|---:|
-| Ours (empirical eigenbasis + GP) | 0.1406 | 1.1025 | 2.763 |
-| TSFlow (locally reproduced) | 0.1578 | 1.1926 | 663.046 (estimated) |
-| DLinear | 0.2054 | 1.3466 | 1.456 |
-| TiDE | 0.1751 | 1.3677 | 0.341 |
-| PatchTST | 0.1449 | 1.1488 | 11.653 |
-| TFT | 0.1420 | 1.1521 | 71.051 |
-| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | — |
-| TiRex (zero-shot) | 0.1205 | 0.9936 | — |
-| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
+| Ours (empirical eigenbasis + GP) | 0\.1406 | 1\.1025 | 2\.763 |
+| TSFlow (locally reproduced) | 0\.1578 | 1\.1926 | 663\.046 (estimated) |
+| DLinear | 0\.2054 | 1\.3466 | 1\.456 |
+| TiDE | 0\.1751 | 1\.3677 | 0\.341 |
+| PatchTST | 0\.1449 | 1\.1488 | 11\.653 |
+| TFT | 0\.1420 | 1\.1521 | 71\.051 |
+| Chronos-2 (zero-shot) | 0\.1189 | 0\.9829 | -- |
+| TiRex (zero-shot) | 0\.1205 | 0\.9936 | -- |
+| TimesFM-2.5 (zero-shot) | 0\.1207 | 0\.9895 | -- |
 
 All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Our forecasts use 20 velocity-field evaluations per trajectory and 100 draws. TSFlow is locally reproduced on all 54 tasks using seed 6432: we select among OU, squared-exponential, and periodic kernels by the best validation wQL through epoch 40, then continue the selected kernel to 400 total epochs. Its model, optimizer, EMA, gradient clipping, normalization, and sampling settings follow the original TSFlow recipe; early kernel selection and single-seed evaluation define this campaign's budget. The other external accuracy scores come from the published GIFT-Eval results.
 
@@ -119,11 +121,11 @@ The matched controls below use the same 54 tasks and equal-weight geometric mean
 
 | Method | Geom. mean wQL ↓ |
 |---|---:|
-| GP-only (statistical forecast) | 0.163321 |
-| Raw-noise (correction from independent noise) | 0.156343 |
-| Raw-GP (prior + correction in time coordinates) | 0.141639 |
-| Ours (prior + correction in its eigenbasis) | 0.140626 |
-| Ours, half input/output ranks (width 192) | 0.142803 |
+| GP-only (statistical forecast) | 0\.163321 |
+| Raw-noise (correction from independent noise) | 0\.156343 |
+| Raw-GP (prior + correction in time coordinates) | 0\.141639 |
+| Ours (prior + correction in its eigenbasis) | 0\.140626 |
+| Ours, half input/output ranks (width 192) | 0\.142803 |
 
 Halving both the input and correction output ranks while keeping the network width at 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank model's accuracy.
 
