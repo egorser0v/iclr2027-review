@@ -87,6 +87,9 @@ The matched controls below use the same 54 tasks and equal-weight geometric mean
 | Raw-noise (correction from independent noise) | 0.156343 |
 | Raw-GP (prior + correction in time coordinates) | 0.141639 |
 | Ours (prior + correction in its eigenbasis) | 0.140626 |
+| Ours, half input/output ranks (width 192) | 0.142803 |
+
+Halving both the input and correction output ranks while keeping the network width at 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank model's accuracy.
 
 The main gain comes from learning a correction to a useful forecast. The correction improves on the GP alone, and starting from that forecast also improves on starting from independent noise. Changing to the prior's eigenbasis gives a smaller additional gain. The synthetic studies examine settings where the choice of correction directions matters more.
 
