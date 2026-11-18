@@ -5,19 +5,23 @@ order: 2
 
 ## Part 1/4: Positioning and non-Gaussian experiments
 
-This part clarifies our contribution and presents the expanded experiments on non-Gaussian dynamics.
+We thank you for asking for broader evidence, probabilistic comparisons, and a clearer account of kernel and representation choices. Your comments have helped us refine the paper's positioning. We start from a prior that is already a useful probabilistic forecaster and learn a small correction to it. Our emphasis is on the prior's forecast quality, beyond the temporal structure it encodes. The goal is to make the most of that starting forecast with minimal training cost. This builds on TSFlow's use of Gaussian process priors in flow matching. Our empirical Gaussian prior follows Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
 
-We thank you for asking for broader empirical coverage, probabilistic comparisons, and a clearer account of kernel and latent-space choices. The question motivating our work is how much neural computation probabilistic forecasting requires when a statistical model already provides a strong forecast. Building on flow matching with Gaussian process priors, as in TSFlow, we investigate whether that statistical forecast can support a small neural correction with accuracy competitive with larger supervised models, and how the choice of correction coordinates affects optimization and stability. The expanded benchmark and kernel studies examine the scope of this approach. Our empirical Gaussian prior follows the approach of estimating forecast structure from historical data developed in Lin et al., Empirical Gaussian Processes (ICML 2026; https://arxiv.org/abs/2602.12082).
-
-The evidence below examines both the scope of this approach and the choices that make it effective. The controlled dynamical examples help identify when the prior's temporal structure and the representation of its correction are useful, including under non-Gaussian and nonstationary dynamics. The kernel and representation studies examine how the statistical structure guides that correction and when it can support a smaller model; the truncation experiments extend the original paper's focus on optimization and stability and were added for this rebuttal. The broader forecasting comparisons then assess the practical accuracy and computational cost, while the component controls identify what the statistical forecast and learned correction each contribute.
+The controlled examples test whether the correction can improve a Gaussian forecast when the data are non-Gaussian or nonstationary. The kernel studies examine which correction directions are useful. New truncation experiments extend the original focus on optimization and stability to smaller corrections. The real-data benchmark and matched controls measure forecast quality and training cost.
 
 ### W1 / Q1: Non-Gaussian dynamics and evaluation scope
 
-To address your request for controlled dynamical examples, we added experiments on two strongly non-Gaussian synthetic dynamical systems: (A) a bimodal Double-Well Langevin stochastic differential equation (SDE) ($dy_t = 3(y_t - y_t^3)dt + \sigma dW_t$, where trajectories stochastically bifurcate into $\pm 1$ wells while the Gaussian prior predicts the unstable mean at $0$), and (B) a non-stationary modulated periodic system with quadratic harmonic skew ($y_t = x_t + a(t)(x_t^2 - K_{tt}) + \epsilon_t$).
+We added two controlled examples with strongly non-Gaussian dynamics. The first is a bimodal Double-Well Langevin stochastic differential equation (SDE). Trajectories move toward either of two wells at $\pm1$, while the Gaussian prior predicts their unstable mean at zero:
+$dy_t=3(y_t-y_t^3)dt+\sigma dW_t$.
+The second is a nonstationary periodic system with a quadratic distortion:
+$y_t=x_t+a(t)(x_t^2-K_{tt})+\epsilon_t$.
+These examples test whether the correction can recover forecast behavior that the Gaussian starting point misses.
 
-In these comparisons, Mercer uses the conditional prior's covariance eigenvectors; principal component analysis (PCA) estimates a basis from data; the discrete cosine transform (DCT) and Fourier transform supply fixed bases; and Raw uses the original time coordinates. The Gaussian process (GP) draw remains full resolution, while the correction uses $k$ basis directions over a forecast horizon of length $L_f$. In the equations above, $W_t$ is Brownian motion, $\sigma$ controls noise strength, $x_t$ is a latent Gaussian process with covariance $K$, and $a(t)$ controls the quadratic distortion, and $\epsilon_t$ is observation noise.
+Mercer uses the conditional prior's covariance eigenvectors. Principal component analysis (PCA) estimates directions from data. The discrete cosine transform (DCT) and Fourier transform use fixed directions. Raw uses time coordinates. The GP draw stays at full resolution. Only the learned correction is restricted to $k$ directions over a horizon of length $L_f$.
 
-We report the continuous ranked probability score (CRPS), which measures probabilistic forecast error; lower is better. Where percentages are shown, the fraction of the prior-to-oracle gap closed is (prior CRPS − model CRPS) / (prior CRPS − oracle CRPS), using the synthetic benchmark's oracle reference score.
+In the equations, $W_t$ is Brownian motion and $\sigma$ controls its strength. The latent process $x_t$ is Gaussian with covariance $K$. The function $a(t)$ controls the quadratic distortion, and $\epsilon_t$ is observation noise.
+
+We report the continuous ranked probability score (CRPS), which measures probabilistic forecast error. Lower is better. Percentages show how much of the prior-to-oracle gap the correction closes: (prior CRPS − model CRPS) / (prior CRPS − oracle CRPS). The oracle score is the synthetic benchmark's reference.
 
 Table 1: Performance on non-Gaussian synthetic dynamical systems ($L_f=32$; CRPS $\downarrow$ and % of Prior-to-Oracle Gap Closed $\uparrow$).
 
@@ -26,19 +30,19 @@ Table 1: Performance on non-Gaussian synthetic dynamical systems ($L_f=32$; CRPS
 | Bimodal Double-Well SDE ($k=12$, high learning rate) | 0\.3647 | 0\.2349 | 0\.2489 (89.2%) | 0\.2493 (88.9%) | 0\.2496 (88.7%) | 0\.2511 (87.5%) | 0\.3647 (0.0%) |
 | Modulated Nonlinear Periodic ($k=10$) | 0\.2565 | 0\.0200 | 0\.0768 (76.0%) | 0\.0884 (71.1%) | 0\.2140 (18.0%) | 0\.2167 (16.8%) | 0\.2180 (16.3%) |
 
-Flow matching substantially improves upon the Gaussian prior on bimodal and skewed dynamics (closing up to 89% of the Oracle gap), with the largest basis differences appearing in the nonstationary low-rank example. The double-well Raw failure describes stability at the stated high learning rate.
+The correction improves the Gaussian forecast on both bimodal and skewed dynamics, closing up to 89% of the prior-to-oracle gap. The largest differences between bases appear in the nonstationary low-rank example. Raw fails in the double-well experiment at the stated high learning rate. That result concerns stability under this training setting.
 
-These controlled dynamics test how a Gaussian source can be corrected toward a non-Gaussian forecast. Our evaluated application is temporal forecasting, with broader real-data coverage provided by 54 GIFT-Eval tasks across datasets, frequencies, and horizons.
+These examples show how a Gaussian starting forecast can be corrected toward a non-Gaussian target. The application studied here is time-series forecasting. The 54-task GIFT-Eval benchmark adds coverage across datasets, frequencies, and horizons.
 
 ---
 
 ## Part 2/4: Kernel choice and learned representations
 
-This part addresses kernel choice, smoothness, and comparisons with learned representations.
-
 ### W3 / Q1 / Q3: Kernel choice and smoothness
 
-To broaden the kernel study beyond the Ornstein–Uhlenbeck (OU) kernel and examine the role of smoothness, we added radial basis function (RBF) and Matérn-5/2 kernels across training sample sizes ($N \in \{64, 512\}$), ranks ($k=6$ vs. full rank $k=32$), and spectral whitening, which rescales each retained coordinate by the inverse square root of its covariance eigenvalue and amplifies small-variance modes. For smooth kernels on $L_f=32$, eigenvalue decay is rapid: the top 6 modes of the conditional-future covariance $\boldsymbol{\Sigma}$ capture 99.97% of the variance for RBF and 99.67% for Matérn-5/2, leaving 26 near-degenerate tail modes at the noise floor.
+We added radial basis function (RBF) and Matérn-5/2 kernels to test smoother priors. We vary training sample size ($N\in\{64,512\}$) and correction rank ($k=6$ or full rank $k=32$). We also test whitening, which divides each coordinate by the square root of its covariance eigenvalue. This amplifies directions with small prior variance.
+
+For these smooth kernels, six directions capture almost all conditional future variance: 99.97% for RBF and 99.67% for Matérn-5/2. The remaining 26 directions lie near the noise floor.
 
 Table 2: Smooth kernel ablation (`RBF` and `Matérn-5/2`, $L_f=32$; CRPS $\downarrow$ and % Oracle Gap Closed $\uparrow$).
 
@@ -49,15 +53,15 @@ Table 2: Smooth kernel ablation (`RBF` and `Matérn-5/2`, $L_f=32$; CRPS $\downa
 | Matérn-5/2 ($N=64$) | 99\.67% | 0\.3726 (+2.3%) | 0\.3750 (+1.5%) | 0\.3821 (-0.6%) | 0\.3817 (-0.5%) | 0\.3856 (-1.7%) | 0\.4291 (-15.1%) |
 | Matérn-5/2 ($N=512$) | 99\.67% | 0\.3303 (+15.2%) | 0\.3321 (+14.7%) | 0\.3321 (+14.7%) | 0\.3758 (+1.3%) | 0\.3339 (+14.1%) | 0\.3331 (+14.4%) |
 
-Truncation is most useful in the small-sample RBF setting, where the leading modes retain almost all prior variance and the reduced model has lower forecast error. The smaller differences at N=512 show that the benefit depends on sample size and spectrum. Covariance reconstruction and nonlinear correction are separate objectives; the forecast results test whether the retained modes are useful for correction.
+A smaller correction helps most in the small-sample RBF setting. Six directions retain almost all prior variance and give lower forecast error than the full-rank correction. The differences shrink at $N=512$. The benefit therefore depends on the sample size and covariance spectrum. Forecast scores test whether these directions are useful for correction, beyond how well they reconstruct the covariance.
 
-Together with OU and the modulated periodic example, these experiments cover stationary, smooth, and nonstationary priors. Non-Gaussian target behavior is learned by the correction. Signature and sequential kernels are natural extensions.
+Together with the Ornstein–Uhlenbeck (OU) kernel and the modulated periodic example, these studies cover stationary, smooth, and nonstationary priors. The correction learns the non-Gaussian target behavior. Signature and sequential kernels offer directions for future work.
 
 ### W4: Learned latent representations
 
-We will revise the latent-space discussion to explain what the representation parameterizes. Our model preserves a full-resolution GP draw and learns an additive correction in a selected subspace. Autoencoder-based latent flow matching instead learns an encoder and decoder for generation. This distinction preserves prior variation outside the correction subspace.
+Our representation describes a correction to a forecast. The model keeps the full-resolution GP draw and adds a correction in selected directions. Variation outside those directions is preserved. Autoencoder-based latent flow matching instead learns an encoder and decoder for generation. We will make this distinction clearer.
 
-For a specified kernel and its parameters, the Mercer basis requires no separate calibration sample; it still requires covariance construction and eigendecomposition. The empirical Gaussian basis used in our real-data study is fitted from training data. To isolate basis estimation in the synthetic study, we fixed the multilayer perceptron (MLP) training set ($N=512, k=8$) and varied only the PCA calibration data—the separate sample used to estimate its covariance eigenvectors.
+Once a kernel and its parameters are specified, the Mercer basis needs no separate calibration sample. Computing the covariance and its eigendecomposition still has a cost. The empirical Gaussian basis in our real-data study is fitted from training data. In the synthetic study, we isolate basis estimation by fixing the multilayer perceptron (MLP) training set ($N=512,k=8$). We change only the separate calibration sample used to estimate PCA's directions.
 
 Table 3: Robustness to basis-estimation scarcity and historical regime shift ($k=8$, CRPS $\downarrow$ and Gap $\uparrow$).
 
@@ -67,21 +71,19 @@ Table 3: Robustness to basis-estimation scarcity and historical regime shift ($k
 | PCA (Standard) | Empirical Cov($y_f$) | 0\.1387 (49.8%) | 0\.1304 (53.3%) | 0\.1608 (40.4%) |
 | DCT / Fourier | 0 samples (Fixed) | 0\.2156 / 0.2184 (17%) | 0\.2156 / 0.2184 (17%) | 0\.2156 / 0.2184 (17%) |
 
-PCA quality depends on its calibration data. With the correction's training set fixed, scarce or shifted calibration worsens PCA forecasts, while the specified-prior basis stays unchanged. This experiment isolates sensitivity to basis estimation.
+PCA's forecast quality depends on its calibration data. Scarce or shifted calibration worsens its results even though the correction's training set stays fixed. The specified-prior basis stays unchanged. This isolates the effect of estimating the basis.
 
 ---
 
 ## Part 3/4: Real-data benchmark and computation
 
-This part presents the 54-task GIFT-Eval comparison, including forecast accuracy and training computation.
-
 ### W2 / W6: Probabilistic baselines and numerical results
 
-We agree that five datasets and a rank-only summary gave too narrow a view of forecasting performance. Your requests for broader coverage, probabilistic baselines, and absolute metrics motivated an expanded study on all 54 GIFT-Eval tasks whose datasets contain single-channel series, spanning datasets, frequencies, and forecast horizons under official splits and forecast origins. We now report both probabilistic and point-forecast accuracy alongside training computation.
+The original evaluation covered five datasets and summarized results by rank. Your requests for broader coverage, probabilistic baselines, and absolute scores motivated a larger evaluation. We now cover all 54 GIFT-Eval tasks whose datasets contain single-channel series. These span datasets, frequencies, and forecast horizons. We use official splits and forecast origins, and report probabilistic accuracy, point-forecast accuracy, and training cost.
 
-The benchmark includes two complementary reference groups: models trained separately on each dataset—the linear DLinear model, the direct-forecast MLP TiDE, the patch-based transformer PatchTST, and the Temporal Fusion Transformer (TFT)—and pretrained probabilistic models used without dataset-specific training (zero-shot)—Chronos-2, TiRex, and TimesFM-2.5. Our real-data model fits an empirical Gaussian prior and learns a correction in its covariance eigenbasis.
+We compare against two groups of forecasters. DLinear, TiDE, PatchTST, and TFT are trained separately on each dataset. DLinear is linear, TiDE is a direct-forecast MLP, and PatchTST is a patch-based transformer. TFT is the Temporal Fusion Transformer. Chronos-2, TiRex, and TimesFM-2.5 are pretrained probabilistic models used without dataset-specific training (zero-shot). Our model fits an empirical Gaussian forecast to the training data, then learns a correction in its covariance eigenbasis.
 
-We report weighted quantile loss (wQL) for probabilistic forecasts, mean absolute scaled error (MASE) for median forecasts, and millions of floating-point operations (MFLOPs) per training sample. Lower values are better for all three.
+We report weighted quantile loss (wQL) for probabilistic forecasts and mean absolute scaled error (MASE) for forecast medians. Training cost is measured in millions of floating-point operations (MFLOPs) per sample. Lower is better for all three.
 
 | Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
 |---|---:|---:|---:|
@@ -94,21 +96,19 @@ We report weighted quantile loss (wQL) for probabilistic forecasts, mean absolut
 | TiRex (zero-shot) | 0.1205 | 0.9936 | — |
 | TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
 
-All columns are geometric means over the same 54 tasks, with equal task weights. wQL measures probabilistic forecast error; MASE measures median-forecast error. Our results use one training seed, validation-selected contexts/checkpoints, 20 velocity-field evaluations per forecast trajectory, and 100 forecast draws; external accuracy scores are published GIFT-Eval results.
+All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Each forecast uses 20 velocity-field evaluations per trajectory and 100 draws. External accuracy scores come from the published GIFT-Eval results.
 
-Training MFLOPs count forward, loss, and backward per univariate context/target window at batch one, including our prior conditioning/sampling and coordinate transforms; optimizer updates and one-time preparation are excluded. Baseline counts use profiled reference architectures and contexts, while accuracy uses published evaluation recipes. Pretrained models require no downstream training, but rely on substantial computation already invested in pretraining. Their training-operation entries are left blank because the table measures task-specific training cost.
+Training profiles cover a forward pass, loss computation, and backward pass for one univariate window at batch size one. They include our prior conditioning, sampling, and coordinate transforms. Optimizer updates and one-time preparation are excluded. Baseline costs use profiled reference architectures and context lengths. Accuracy scores follow the published evaluation recipes. The pretrained models require no task-specific training, so their entries are blank in this column. They rely on substantial computation already invested in pretraining. That cost is separate from the task-specific training measured here.
 
-The main practical result is that a strong statistical forecast lets a small supervised correction achieve competitive accuracy at substantially lower training cost than the larger task-trained models profiled here. The aggregate accuracy advantages over PatchTST and TFT are modest, and performance varies across tasks. The stronger evidence for the design comes from improving the statistical forecast itself, as the component controls show. The pretrained models provide a complementary reference with stronger accuracy and no downstream training.
+A strong statistical forecast lets a small learned correction reach accuracy competitive with PatchTST and TFT at substantially lower profiled training cost. The aggregate accuracy gains are modest, and performance varies across tasks. The component controls give the clearest evidence for the approach: the correction improves the starting forecast itself. The pretrained models achieve stronger accuracy and require no downstream training.
 
 ---
 
 ## Part 4/4: Controls, computational scaling, and channels
 
-This part isolates the prior and correction effects and addresses computational scaling and correlated channels.
-
 ### Prior and representation controls
 
-To identify what each component contributes, we compare three controls: GP-only is the fitted statistical forecast without a neural correction; Raw-GP uses the same Gaussian starting forecast and correction network in the original time coordinates; Raw-noise uses that network in the original coordinates but starts from independent Gaussian noise. These controls share the neural training recipe wherever a network is used.
+We compare the statistical forecast alone with three learned models. GP-only is the fitted forecast without a correction. Raw-GP adds a correction in the original time coordinates. It uses the same Gaussian starting forecast and correction network as our model. Raw-noise uses that network in time coordinates but starts from independent Gaussian noise. Our model starts from the GP forecast and learns the correction in its eigenbasis. All neural models use the same training recipe.
 
 The matched controls below use the same 54 tasks and equal-weight geometric mean wQL.
 
@@ -119,12 +119,12 @@ The matched controls below use the same 54 tasks and equal-weight geometric mean
 | Raw-GP (prior + correction in time coordinates) | 0.141639 |
 | Ours (prior + correction in its eigenbasis) | 0.140626 |
 
-These controls explain where the gain comes from: correction improves wQL by 13.90% over GP-only and 10.05% over Raw-noise, while the full-rank eigenbasis improves Raw-GP by 0.72%. Thus the real-data evidence favors lightweight correction of a fitted prior, with the synthetic studies identifying when basis choice contributes more strongly. Performance varies across tasks: the aggregate gains over PatchTST and TFT accompany wins on 23/54 and 21/54 tasks, respectively.
+The main gain comes from learning a correction to a useful forecast. The correction improves on the GP alone, and starting from that forecast also improves on starting from independent noise. Changing to the prior's eigenbasis gives a smaller additional gain. The synthetic studies examine settings where the choice of correction directions matters more. Our model wins on 23/54 tasks against PatchTST and 21/54 against TFT.
 
 ### W5 / Q4: Computational scaling
 
-We will expand the cost discussion to separate prior preparation, sampling, and neural correction. Writing $C$ for context length and $H$ for forecast horizon, the conditional covariance is prepared once for a given prior, context, and horizon. Dense preparation can cost $O((C+H)^3)$ time and $O((C+H)^2)$ storage. Reducing correction rank lowers the MLP's input/output projection cost: in the synthetic suite, parameters fall from 24.9k to 18.0k. Full-rank prior sampling remains part of the forecast cost. With fixed hidden width, projection and network costs grow with the retained dimensions; inference also scales with solver steps and forecast draws.
+We will separate the costs of preparing the prior, sampling a forecast, and learning its correction. Let $C$ be the context length and $H$ the forecast horizon. The conditional covariance is prepared once for a given prior, context, and horizon. Dense preparation can take $O((C+H)^3)$ time and $O((C+H)^2)$ storage. A smaller correction reduces the MLP's input and output projection cost. In the synthetic suite, parameters fall from 24.9k to 18.0k. The starting forecast still requires full-rank prior sampling. At fixed hidden width, network and projection costs grow with the retained dimensions. Inference cost also grows with solver steps and forecast draws.
 
 ### Q2: Correlated channels
 
-We will make the channel-independent scope explicit in the method and experimental descriptions. The evaluated model shares neural parameters across channels and conditions each forecast on that channel's history. It targets marginal probabilistic forecasts. Modeling joint multichannel outcomes additionally requires cross-channel dependence.
+The evaluated model forecasts each channel from its own history, with neural parameters shared across channels. It targets marginal probabilistic forecasts. Joint multichannel forecasting would also require modeling dependence between channels. We will state this scope clearly in the method and experiments.
