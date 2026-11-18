@@ -5,7 +5,9 @@ order: 2
 
 ## Part 1/4: Positioning and optimizer analysis
 
-We thank you for identifying the error in our Adam analysis and asking us to separate the role of the representation from the efficiency of the neural model. Your comments have helped us refine the paper's positioning. We start from a prior that is already a useful probabilistic forecaster and learn a small correction to it. Our emphasis is on the prior's forecast quality, beyond the temporal structure it encodes. The goal is to make the most of that starting forecast with minimal training cost. This builds on TSFlow's use of Gaussian process priors in flow matching. For real data, we fit an empirical Gaussian prior following Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
+We thank you for identifying the error in our Adam analysis and asking us to separate the role of the representation from the efficiency of the neural model. Your comments have helped us refine the paper's positioning. TSFlow focuses on matching the prior to the temporal structure of the data. We ask whether the prior is a good probabilistic forecaster in its own right. When it is, how much can a very small neural network gain from the predictive information it already contains? We build on TSFlow's use of Gaussian process priors in flow matching to learn a small correction to that forecast. The goal is to make the most of that starting forecast with minimal training cost. For real data, we fit an empirical Gaussian prior following Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
+
+Our results show that a small learned correction improves the statistical forecast and reaches accuracy competitive with larger task-trained forecasters, at substantially lower training cost in the profiled implementations.
 
 We first correct the optimizer analysis, then examine when the choice of correction directions matters. The original paper studied optimization and stability. New truncation experiments explore whether the prior can also guide a smaller correction. Finally, the forecasting comparisons and matched controls show what the prior, correction, and neural architecture each contribute.
 
@@ -80,13 +82,13 @@ We will revise the periodic-basis discussion to match this evidence. Fourier tru
 
 The $4.7\times$ memory and $4\times$ speed gains over TSFlow come from replacing S4 with an MLP. We will attribute them to that architecture change. To measure the effect of coordinates separately, we use the same MLP and training recipe in time coordinates and in the prior's eigenbasis. Table 2 also compares corrections restricted to fewer directions. These controls distinguish a small full-rank coordinate effect from the larger effect of choosing which directions to correct.
 
-The original evaluation mixed architecture and basis effects and offered limited probabilistic comparisons. We have expanded it to all 54 GIFT-Eval tasks whose datasets contain single-channel series. These span datasets, frequencies, and short, medium, and long horizons. All comparisons use the benchmark's official splits, forecast origins, and scoring.
+The original evaluation mixed architecture and basis effects and offered limited probabilistic comparisons. We now cover all 54 GIFT-Eval tasks with single-channel series, spanning datasets, frequencies, and short, medium, and long horizons. All comparisons use official splits, forecast origins, and scoring.
 
 ### Prior and representation controls
 
 We compare the statistical forecast alone with three learned models. GP-only is the fitted forecast without a correction. Raw-GP adds a correction in the original time coordinates. It uses the same Gaussian starting forecast and correction network as our model. Raw-noise uses that network in time coordinates but starts from independent Gaussian noise. Our model starts from the GP forecast and learns the correction in its eigenbasis. All neural models use the same training recipe.
 
-The matched controls below use the same 54 tasks and equal-weight geometric mean wQL.
+The controls use the same 54 tasks and equal-weight geometric mean wQL.
 
 | Method | Geom. mean wQL ↓ |
 |---|---:|
@@ -96,7 +98,7 @@ The matched controls below use the same 54 tasks and equal-weight geometric mean
 | Ours (prior + correction in its eigenbasis) | 0.140626 |
 | Ours, half input/output ranks (width 192) | 0.142803 |
 
-Halving both the input and correction output ranks while keeping the network width at 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank model's accuracy.
+Halving the input and correction output ranks at width 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank accuracy.
 
 The main gain comes from learning a correction to a useful forecast. The correction improves on the GP alone, and starting from that forecast also improves on starting from independent noise. Changing to the prior's eigenbasis gives a smaller additional gain. The synthetic studies examine settings where the choice of correction directions matters more.
 

@@ -5,7 +5,9 @@ order: 2
 
 ## Part 1/4: Positioning and non-Gaussian experiments
 
-We thank you for asking for broader evidence, probabilistic comparisons, and a clearer account of kernel and representation choices. Your comments have helped us refine the paper's positioning. We start from a prior that is already a useful probabilistic forecaster and learn a small correction to it. Our emphasis is on the prior's forecast quality, beyond the temporal structure it encodes. The goal is to make the most of that starting forecast with minimal training cost. This builds on TSFlow's use of Gaussian process priors in flow matching. Our empirical Gaussian prior follows Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
+We thank you for asking for broader evidence, probabilistic comparisons, and a clearer account of kernel and representation choices. Your comments have helped us refine the paper's positioning. TSFlow focuses on matching the prior to the temporal structure of the data. We ask whether the prior is a good probabilistic forecaster in its own right. When it is, how much can a very small neural network gain from the predictive information it already contains? We build on TSFlow's use of Gaussian process priors in flow matching to learn a small correction to that forecast. The goal is to make the most of that starting forecast with minimal training cost. Our empirical Gaussian prior follows Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
+
+Our results show that a small learned correction improves the statistical forecast and reaches accuracy competitive with larger task-trained forecasters, at substantially lower training cost in the profiled implementations.
 
 The controlled examples test whether the correction can improve a Gaussian forecast when the data are non-Gaussian or nonstationary. The kernel studies examine which correction directions are useful. New truncation experiments extend the original focus on optimization and stability to smaller corrections. The real-data benchmark and matched controls measure forecast quality and training cost.
 

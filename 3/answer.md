@@ -5,7 +5,9 @@ order: 2
 
 ## Part 1/4: Positioning and synthetic rank comparisons
 
-We thank you for asking us to clarify the contribution of the representation and separate it from the efficiency of the neural model. Your comments have helped us refine the paper's positioning. We start from a prior that is already a useful probabilistic forecaster and learn a small correction to it. Our emphasis is on the prior's forecast quality, beyond the temporal structure it encodes. The goal is to make the most of that starting forecast with minimal training cost. This builds on TSFlow's use of Gaussian process priors in flow matching. For real data, our empirical Gaussian prior follows Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
+We thank you for asking us to clarify the contribution of the representation and separate it from the efficiency of the neural model. Your comments have helped us refine the paper's positioning. TSFlow focuses on matching the prior to the temporal structure of the data. We ask whether the prior is a good probabilistic forecaster in its own right. When it is, how much can a very small neural network gain from the predictive information it already contains? We build on TSFlow's use of Gaussian process priors in flow matching to learn a small correction to that forecast. The goal is to make the most of that starting forecast with minimal training cost. For real data, our empirical Gaussian prior follows Lin et al., *Empirical Gaussian Processes* (ICML 2026; https://arxiv.org/abs/2602.12082).
+
+Our results show that a small learned correction improves the statistical forecast and reaches accuracy competitive with larger task-trained forecasters, at substantially lower training cost in the profiled implementations.
 
 The forecasting comparisons measure how much the correction adds to the starting forecast and how much training it requires. Matched controls separate this benefit from the effect of the coordinates. The original representation studies focused on optimization and stability. New truncation experiments explore whether the prior can also guide a smaller correction.
 
