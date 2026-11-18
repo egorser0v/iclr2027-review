@@ -5,11 +5,11 @@ order: 2
 
 ## Part 1/4: Positioning and synthetic rank comparisons
 
-This part explains the revised contribution and the synthetic evidence for representation choice under truncation.
+This part clarifies our contribution and presents the synthetic evidence for representation choice under truncation.
 
-We thank you for pressing us to distinguish a coordinate change from a modeling contribution, and basis effects from the efficiency of a smaller backbone. We agree that full-rank rotations preserve the model class, and the expanded experiments show similar full-rank accuracy. We will rewrite the contribution statement around the larger practical finding: a lightweight neural correction improves a strong statistical probabilistic forecast. In the empirical study, that starting forecast uses a fitted Gaussian prior, building on the data-driven prior formulation of Lin et al., Empirical Gaussian Processes (ICML 2026; https://arxiv.org/abs/2602.12082).
+We thank you for asking us to clarify the contribution of the representation and distinguish it from backbone efficiency. The question motivating our work is how much neural computation probabilistic forecasting requires when a statistical model already provides a strong forecast. Building on flow matching with Gaussian process priors, as in TSFlow, we ask how to integrate that forecast so that a small supervised model can compete with larger neural forecasters. The MLP tests how little neural capacity is needed for correction, while the covariance eigenbasis addresses how the prior's structure can support optimization and stability. In the empirical study, the fitted Gaussian prior builds on the data-driven prior formulation of Lin et al., Empirical Gaussian Processes (ICML 2026; https://arxiv.org/abs/2602.12082).
 
-Your question about what representation contributes also motivated the low-rank comparisons. Under truncation, representation bases (codecs) select different learnable correction subspaces, and the synthetic results favor the Mercer codec in the tested settings. This motivates its use through the fitted Gaussian eigensystem in our empirical model. We will separate that representation result from the main forecast-correction contribution and from the backbone savings, using the matched controls and absolute effects below.
+The evidence below addresses two aspects of this question. The forecasting comparisons and component controls establish how much a small neural correction adds to a strong statistical forecast, and where its accuracy and computational savings come from. The representation studies examine how the correction should use the prior's structure: the original paper focused on optimization and stability, while the truncation experiments added for this rebuttal explore whether that structure can also support a smaller correction. Together, these studies explain both the practical value of the lightweight model and the specific role of its coordinates.
 
 ### W1: Contribution beyond a coordinate rotation
 
@@ -59,7 +59,7 @@ These results identify two benefits: selecting useful correction directions at l
 
 ### Q2: Optimizer analysis and conditional interpolants
 
-We have corrected the conditioning analysis and will revise its interpretation to distinguish the surrogate from actual optimizer dynamics. For a fixed covariance $K$ and orthogonal basis $\Phi$, write $A=\Phi^\top K\Phi$ for the covariance in that basis and $\kappa$ for its condition number. The corrected frozen input-curvature surrogate is $S^{-1/4}AS^{-1/4}$, where $S=\operatorname{diag}(A)$. An eigenbasis minimizes its condition number over orthogonal representations, attaining $\sqrt{\kappa(A)}$, with possible ties. Measurements on the flow-matching interpolation between source and target test this geometry in the synthetic training distributions. Actual Adam/AdamW dynamics also depend on residuals, momentum, and evolving second moments, so we use the surrogate to explain a mechanism and direct forecast scores to assess accuracy. The current real-data runs use Adam.
+We have corrected the conditioning analysis and will revise its interpretation to distinguish the surrogate from actual optimizer dynamics. For a fixed covariance $K$ and orthogonal basis $\Phi$, write $A=\Phi^\top K\Phi$ for the covariance in that basis and $\kappa$ for its condition number. The corrected frozen input-curvature surrogate is $S^{-1/4}AS^{-1/4}$, where $S=\operatorname{diag}(A)$. In an eigenbasis the matrix is diagonal, and the scaling takes the square root of each covariance eigenvalue, giving condition number $\sqrt{\kappa(A)}$. Measurements on the flow-matching interpolation between source and target test this geometry in the synthetic training distributions. Actual Adam/AdamW dynamics also depend on residuals, momentum, and evolving second moments, so we use the surrogate to explain a mechanism and direct forecast scores to assess accuracy. The current real-data runs use Adam.
 
 ### Q3: Effect sizes and statistical reporting
 
@@ -75,34 +75,7 @@ This part clarifies backbone attribution and presents the 54-task GIFT-Eval accu
 
 We agree that the $4.7\times$ memory and $4\times$ runtime improvements over TSFlow arise from replacing S4 with an MLP. We will rewrite the corresponding efficiency discussion to attribute these gains to the backbone change. We now present matched corrections in the original time coordinates and the prior's eigenbasis, using the same MLP and training recipe to isolate representation effects, and include TiDE as a direct-forecast MLP reference.
 
-We agree that a smaller MLP alone leaves the contribution of representation unresolved. Your questions about absolute gains and matched controls motivated a broader evaluation on all 54 GIFT-Eval tasks whose datasets contain single-channel series, using official splits, forecast origins, and scoring. We compare accuracy and training computation with external forecasters, then use the same MLP recipe for the prior and representation controls.
-
-The benchmark includes two complementary reference groups: models trained separately on each dataset—the linear DLinear model, the direct-forecast MLP TiDE, the patch-based transformer PatchTST, and the Temporal Fusion Transformer (TFT)—and pretrained probabilistic models used without dataset-specific training (zero-shot)—Chronos-2, TiRex, and TimesFM-2.5. Our real-data model fits an empirical Gaussian prior and learns a correction in its covariance eigenbasis.
-
-We report weighted quantile loss (wQL) for probabilistic forecasts, mean absolute scaled error (MASE) for median forecasts, and millions of floating-point operations (MFLOPs) per training sample. Lower values are better for all three.
-
-| Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
-|---|---:|---:|---:|
-| Ours (empirical eigenbasis + GP) | 0.1406 | 1.1025 | 2.763 |
-| DLinear | 0.2054 | 1.3466 | 1.456 |
-| TiDE | 0.1751 | 1.3677 | 0.341 |
-| PatchTST | 0.1449 | 1.1488 | 11.653 |
-| TFT | 0.1420 | 1.1521 | 71.051 |
-| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | 10,551.4† |
-| TiRex (zero-shot) | 0.1205 | 0.9936 | 877.2† |
-| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | 5,779.8† |
-
-All columns are geometric means over the same 54 tasks, with equal task weights. wQL measures probabilistic forecast error; MASE measures median-forecast error. Our results use one training seed, validation-selected contexts/checkpoints, 20 velocity-field evaluations per forecast trajectory, and 100 forecast draws; external accuracy scores are published GIFT-Eval results.
-
-Training MFLOPs count forward, loss, and backward per univariate context/target window at batch one, including our prior conditioning/sampling and coordinate transforms; optimizer updates and one-time preparation are excluded. Baseline counts use profiled reference architectures and contexts, while accuracy uses published evaluation recipes. †Pretrained-model counts describe hypothetical full-model training steps; their zero-shot downstream training cost is zero.
-
-The main practical result is the accuracy–computation tradeoff. Our model has the lowest aggregate wQL and MASE among these task-trained methods, at approximately 4.2× fewer training operations than PatchTST and 25.7× fewer than TFT in the profiled implementations. TiDE and DLinear require fewer operations but have higher forecast error. The pretrained models achieve stronger accuracy, giving a complementary reference for the gap between lightweight task-specific training and large-scale pretraining.
-
----
-
-## Part 4/4: Prior and representation controls
-
-This part isolates the effects of the statistical prior, neural correction, and representation under a shared training recipe.
+We agree that a smaller MLP alone leaves the contribution of representation unresolved. Your questions about absolute gains and matched controls motivated a broader evaluation on all 54 GIFT-Eval tasks whose datasets contain single-channel series, using official splits, forecast origins, and scoring. We first use matched controls to identify the sources of improvement, then compare accuracy and training computation with external forecasters.
 
 ### Prior and representation controls
 
@@ -117,6 +90,35 @@ The matched controls below use the same 54 tasks and equal-weight geometric mean
 | Raw-GP (prior + correction in time coordinates) | 0.141639 |
 | Ours (prior + correction in its eigenbasis) | 0.140626 |
 
-These controls explain where the gain comes from: correction improves wQL by 13.90% over GP-only and 10.05% over Raw-noise, while the full-rank eigenbasis improves Raw-GP by 0.72%. Thus the real-data evidence favors lightweight correction of a fitted prior, with the synthetic studies identifying when basis choice contributes more strongly. Performance varies across tasks: the aggregate gains over PatchTST and TFT accompany wins on 23/54 and 21/54 tasks, respectively.
+These controls explain where the gain comes from: correction improves wQL by 13.90% over GP-only and 10.05% over Raw-noise, while the full-rank eigenbasis improves Raw-GP by 0.72%. Thus the real-data evidence favors lightweight correction of a fitted prior, with the synthetic studies identifying when basis choice contributes more strongly.
+
+### Broader forecasting comparison
+
+The benchmark includes two complementary reference groups: models trained separately on each dataset—the linear DLinear model, the direct-forecast MLP TiDE, the patch-based transformer PatchTST, and the Temporal Fusion Transformer (TFT)—and pretrained probabilistic models used without dataset-specific training (zero-shot)—Chronos-2, TiRex, and TimesFM-2.5. Our real-data model fits an empirical Gaussian prior and learns a correction in its covariance eigenbasis.
+
+We report weighted quantile loss (wQL) for probabilistic forecasts, mean absolute scaled error (MASE) for median forecasts, and millions of floating-point operations (MFLOPs) per training sample. Lower values are better for all three.
+
+| Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
+|---|---:|---:|---:|
+| Ours (empirical eigenbasis + GP) | 0.1406 | 1.1025 | 2.763 |
+| DLinear | 0.2054 | 1.3466 | 1.456 |
+| TiDE | 0.1751 | 1.3677 | 0.341 |
+| PatchTST | 0.1449 | 1.1488 | 11.653 |
+| TFT | 0.1420 | 1.1521 | 71.051 |
+| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | — |
+| TiRex (zero-shot) | 0.1205 | 0.9936 | — |
+| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
+
+All columns are geometric means over the same 54 tasks, with equal task weights. wQL measures probabilistic forecast error; MASE measures median-forecast error. Our results use one training seed, validation-selected contexts/checkpoints, 20 velocity-field evaluations per forecast trajectory, and 100 forecast draws; external accuracy scores are published GIFT-Eval results.
+
+Training MFLOPs count forward, loss, and backward per univariate context/target window at batch one, including our prior conditioning/sampling and coordinate transforms; optimizer updates and one-time preparation are excluded. Baseline counts use profiled reference architectures and contexts, while accuracy uses published evaluation recipes. Pretrained models require no downstream training, but rely on substantial computation already invested in pretraining. Their training-operation entries are left blank because the table measures task-specific training cost.
+
+The main practical result is that a strong statistical forecast lets a small supervised correction achieve competitive accuracy at substantially lower training cost than the larger task-trained models profiled here. The aggregate accuracy advantages over PatchTST and TFT are modest, and performance varies across tasks. The stronger evidence for the design comes from improving the statistical forecast itself, as the component controls show. The pretrained models provide a complementary reference with stronger accuracy and no downstream training.
+
+---
+
+## Part 4/4: Scope of the optimization comparison
+
+This part clarifies what the shared training recipe establishes.
 
 For the tuning question, these controls measure a shared optimization recipe (Adam learning rate 0.001) and matched budget. The synthetic rank comparisons above isolate the larger representation effects that appear when the correction subspace is restricted.

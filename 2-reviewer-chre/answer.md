@@ -5,11 +5,11 @@ order: 2
 
 ## Part 1/4: Positioning and non-Gaussian experiments
 
-This part explains the revised contribution and the expanded experiments on non-Gaussian dynamics.
+This part clarifies our contribution and presents the expanded experiments on non-Gaussian dynamics.
 
-We thank you for asking for broader empirical coverage, probabilistic comparisons, and a clearer account of kernel and latent-space choices. These concerns motivated both the expanded GIFT-Eval benchmark and the added nonlinear-dynamics and kernel studies. We will revise the introduction to emphasize the forecasting contribution: starting from a strong statistical probabilistic model, a small neural correction improves its forecast. Our empirical Gaussian prior follows the approach of estimating forecast structure from historical data developed in Lin et al., Empirical Gaussian Processes (ICML 2026; https://arxiv.org/abs/2602.12082).
+We thank you for asking for broader empirical coverage, probabilistic comparisons, and a clearer account of kernel and latent-space choices. The question motivating our work is how much neural computation probabilistic forecasting requires when a statistical model already provides a strong forecast. Building on flow matching with Gaussian process priors, as in TSFlow, we investigate whether that statistical forecast can support a small neural correction with accuracy competitive with larger supervised models, and how the choice of correction coordinates affects optimization and stability. The expanded benchmark and kernel studies examine the scope of this approach. Our empirical Gaussian prior follows the approach of estimating forecast structure from historical data developed in Lin et al., Empirical Gaussian Processes (ICML 2026; https://arxiv.org/abs/2602.12082).
 
-This framing also clarifies the purpose of the latent representation. Full-rank choices of representation basis, or codec, give similar accuracy, while truncation exposes differences in the correction directions they retain. The synthetic studies support the Mercer codec as a useful choice for low-rank correction, motivating our use of the fitted Gaussian eigenbasis in the empirical experiments. Below we explain the added evidence on non-Gaussian dynamics, smoothness, basis estimation, and real-data forecasting within this formulation.
+The evidence below examines both the scope of this approach and the choices that make it effective. The controlled dynamical examples help identify when the prior's temporal structure and the representation of its correction are useful, including under non-Gaussian and nonstationary dynamics. The kernel and representation studies examine how the statistical structure guides that correction and when it can support a smaller model; the truncation experiments extend the original paper's focus on optimization and stability and were added for this rebuttal. The broader forecasting comparisons then assess the practical accuracy and computational cost, while the component controls identify what the statistical forecast and learned correction each contribute.
 
 ### W1 / Q1: Non-Gaussian dynamics and evaluation scope
 
@@ -90,15 +90,15 @@ We report weighted quantile loss (wQL) for probabilistic forecasts, mean absolut
 | TiDE | 0.1751 | 1.3677 | 0.341 |
 | PatchTST | 0.1449 | 1.1488 | 11.653 |
 | TFT | 0.1420 | 1.1521 | 71.051 |
-| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | 10,551.4† |
-| TiRex (zero-shot) | 0.1205 | 0.9936 | 877.2† |
-| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | 5,779.8† |
+| Chronos-2 (zero-shot) | 0.1189 | 0.9829 | — |
+| TiRex (zero-shot) | 0.1205 | 0.9936 | — |
+| TimesFM-2.5 (zero-shot) | 0.1207 | 0.9895 | — |
 
 All columns are geometric means over the same 54 tasks, with equal task weights. wQL measures probabilistic forecast error; MASE measures median-forecast error. Our results use one training seed, validation-selected contexts/checkpoints, 20 velocity-field evaluations per forecast trajectory, and 100 forecast draws; external accuracy scores are published GIFT-Eval results.
 
-Training MFLOPs count forward, loss, and backward per univariate context/target window at batch one, including our prior conditioning/sampling and coordinate transforms; optimizer updates and one-time preparation are excluded. Baseline counts use profiled reference architectures and contexts, while accuracy uses published evaluation recipes. †Pretrained-model counts describe hypothetical full-model training steps; their zero-shot downstream training cost is zero.
+Training MFLOPs count forward, loss, and backward per univariate context/target window at batch one, including our prior conditioning/sampling and coordinate transforms; optimizer updates and one-time preparation are excluded. Baseline counts use profiled reference architectures and contexts, while accuracy uses published evaluation recipes. Pretrained models require no downstream training, but rely on substantial computation already invested in pretraining. Their training-operation entries are left blank because the table measures task-specific training cost.
 
-The main practical result is the accuracy–computation tradeoff. Our model has the lowest aggregate wQL and MASE among these task-trained methods, at approximately 4.2× fewer training operations than PatchTST and 25.7× fewer than TFT in the profiled implementations. TiDE and DLinear require fewer operations but have higher forecast error. The pretrained models achieve stronger accuracy, giving a complementary reference for the gap between lightweight task-specific training and large-scale pretraining.
+The main practical result is that a strong statistical forecast lets a small supervised correction achieve competitive accuracy at substantially lower training cost than the larger task-trained models profiled here. The aggregate accuracy advantages over PatchTST and TFT are modest, and performance varies across tasks. The stronger evidence for the design comes from improving the statistical forecast itself, as the component controls show. The pretrained models provide a complementary reference with stronger accuracy and no downstream training.
 
 ---
 
