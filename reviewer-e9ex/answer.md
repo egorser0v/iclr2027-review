@@ -52,6 +52,9 @@ While full-rank orthonormal bases ($k=L_f$) parameterize the same function class
 ### 4\. Non-OU, Periodic, and Non-Stationary Priors
 
 Table 2 above already uses a **non-stationary modulated periodic kernel** $K(s,t) = (0.5 + c \min(s,t)) K_{\text{Per}}(s,t)$ with a non-divisor period ($p=5.5$ on $L_f=32$), demonstrating how Mercer adapts to both non-stationarity and non-circulant periodicity.
+
+
+
 \[TO ADD: Results on a second real-world periodic dataset and a period-matched Fourier baseline.\]
 
 ---

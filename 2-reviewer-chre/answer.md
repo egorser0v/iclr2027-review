@@ -51,7 +51,6 @@ Unlike autoencoder-based Latent Flow Matching or empirical PCA--which require su
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **Mercer (Ours)** | **0 samples (Data-Free)** | **0\.1250 (55.6%)** | 0\.1250 (55.6%) | **0\.1250 (55.6%)** | **0\.229** |
 | **PCA (Standard)** | Empirical Cov($y_f$) | 0\.1387 (49.8%) | 0\.1304 (53.3%) | 0\.1608 (40.4%) | 0\.414 |
-| **PCA (Residual)** | Empirical Cov($y_f - \mu$) | 0\.1315 (52.8%) | **0\.1150 (59.8%)** | 0\.2131 (18.3%) | 0\.753 |
 | **DCT / Fourier** | 0 samples (Fixed) | 0\.2156 / 0.2184 (17%) | 0\.2156 / 0.2184 (17%) | 0\.2156 / 0.2184 (17%) | 0\.742 / 0.748 |
 
 **Takeaway:** Data-dependent bases (both standard and residual PCA) degrade significantly under small calibration samples ($N=10$) or regime shifts (where residual PCA loses $75\%$ of the signal energy), whereas Mercer remains completely invariant.
