@@ -95,10 +95,10 @@ The controls use the same 54 tasks and equal-weight geometric mean wQL.
 | GP-only (statistical forecast) | 0\.163321 |
 | Raw-noise (correction from independent noise) | 0\.156343 |
 | Raw-GP (prior + correction in time coordinates) | 0\.141639 |
-| Ours (prior + correction in its eigenbasis) | 0\.140626 |
-| Ours, half input/output ranks (width 192) | 0\.142803 |
+| MercerFlow (prior + correction in its eigenbasis) | 0\.140626 |
+| MercerFlow, half input/output ranks (same width) | 0\.142803 |
 
-Halving the input and correction output ranks at width 192 increases aggregate wQL by only 1.55%, preserving most of the full-rank accuracy.
+Halving the input and correction output ranks while keeping the same network width increases aggregate wQL by only 1.55%, preserving most of the full-rank accuracy.
 
 The main gain comes from learning a correction to a useful forecast. The correction improves on the GP alone, and starting from that forecast also improves on starting from independent noise. Changing to the prior's eigenbasis gives a smaller additional gain. The synthetic studies examine settings where the choice of correction directions matters more.
 
@@ -110,7 +110,7 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 
 | Method | Geom. mean wQL ↓ | Geom. mean MASE ↓ | Geom. mean training MFLOPs/sample ↓ |
 |---|---:|---:|---:|
-| Ours (empirical eigenbasis + GP) | 0\.1406 | 1\.1025 | 2\.763 |
+| MercerFlow (empirical eigenbasis + GP) | 0\.1406 | 1\.1025 | 2\.763 |
 | TSFlow (locally reproduced) | 0\.1578 | 1\.1926 | 663\.046 (estimated) |
 | DLinear | 0\.2054 | 1\.3466 | 1\.456 |
 | TiDE | 0\.1751 | 1\.3677 | 0\.341 |
