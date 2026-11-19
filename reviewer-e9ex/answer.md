@@ -86,7 +86,7 @@ The original evaluation mixed architecture and basis effects and offered limited
 
 ### Prior and representation controls
 
-We compare the statistical forecast alone with three learned models. GP-only is the fitted forecast without a correction. Raw-GP adds a correction in the original time coordinates. It uses the same Gaussian starting forecast and correction network as our model. Raw-noise uses that network in time coordinates but starts from independent Gaussian noise. Our model starts from the GP forecast and learns the correction in its eigenbasis. All neural models use the same training recipe.
+GP-only is the fitted statistical forecast. Raw-GP learns a correction in time coordinates; MercerFlow learns it in the prior's eigenbasis. Raw-noise starts from independent Gaussian noise. All neural models share the correction network and training recipe, isolating the effects of the starting forecast and coordinates.
 
 The controls use the same 54 tasks and equal-weight geometric mean wQL.
 
@@ -104,7 +104,7 @@ The main gain comes from learning a correction to a useful forecast. The correct
 
 ### Broader forecasting comparison
 
-We compare against two groups of forecasters. DLinear, TiDE, PatchTST, and TFT are trained separately on each dataset. DLinear is linear, TiDE is a direct-forecast MLP, and PatchTST is a patch-based transformer. TFT is the Temporal Fusion Transformer. Chronos-2, TiRex, and TimesFM-2.5 are pretrained probabilistic models used without dataset-specific training (zero-shot). Our model fits an empirical Gaussian forecast to the training data, then learns a correction in its covariance eigenbasis.
+DLinear, TiDE (a direct-forecast MLP), PatchTST, and TFT are trained separately on each dataset. Chronos-2, TiRex, and TimesFM-2.5 are pretrained probabilistic models evaluated zero-shot. Our model learns a correction to an empirical Gaussian forecast.
 
 We report weighted quantile loss (wQL) for probabilistic forecasts and mean absolute scaled error (MASE) for forecast medians. Training cost is measured in millions of floating-point operations (MFLOPs) per sample. Lower is better for all three.
 
@@ -120,11 +120,11 @@ We report weighted quantile loss (wQL) for probabilistic forecasts and mean abso
 | TiRex (zero-shot) | 0\.1205 | 0\.9936 | -- |
 | TimesFM-2.5 (zero-shot) | 0\.1207 | 0\.9895 | -- |
 
-All columns are geometric means over the same 54 tasks, with equal weight per task. Our results use one training seed. Context lengths and checkpoints are selected on validation data. Our forecasts use 20 velocity-field evaluations per trajectory and 100 draws. TSFlow is locally reproduced on all 54 tasks using seed 6432: we select among OU, squared-exponential, and periodic kernels by the best validation wQL through epoch 40, then continue the selected kernel to 400 total epochs. Its model, optimizer, EMA, gradient clipping, normalization, and sampling settings follow the original TSFlow recipe; early kernel selection and single-seed evaluation define this campaign's budget. The other external accuracy scores come from the published GIFT-Eval results.
+All columns are equal-weight geometric means over the same 54 tasks. Our results use one training seed, with context lengths and checkpoints selected on validation data. Our local TSFlow reproduction uses one seed and its original training recipe, with early validation-based selection among three kernels followed by 400 total training epochs. Other external accuracy scores come from the published GIFT-Eval results.
 
 Our correction achieves 10.86% lower aggregate wQL and 7.55% lower aggregate MASE than this TSFlow reproduction on the complete shared panel.
 
-Training profiles cover a forward pass, loss computation, and backward pass for one univariate window at batch size one. They include our prior conditioning, sampling, and coordinate transforms. TSFlow uses its final selected kernels and native training loss, including GP conditioning and factorization; S4 arithmetic uses a dense Cauchy reference and analytical FFT estimates. Shared S4 kernel generation and GP factorization are counted once per window at batch one and amortize over larger batches. Optimizer updates, clipping, EMA, validation, and one-time preparation are excluded. Other task-trained baseline costs use profiled reference architectures and context lengths. Accuracy scores follow the published evaluation recipes. The pretrained models require no task-specific training, so their entries are blank in this column. They rely on substantial computation already invested in pretraining. That cost is separate from the task-specific training measured here.
+Training costs cover forward and backward passes, including our prior conditioning, sampling, and coordinate transforms, at batch size one. TSFlow's estimate includes GP operations and estimated S4 arithmetic; shared costs amortize over larger batches. Baseline costs use reference architectures and context lengths. These profiles exclude optimizer updates, validation, and one-time preparation. The zero-shot models require no task-specific training; their pretraining cost is separate.
 
 A strong statistical forecast lets a small learned correction reach accuracy competitive with PatchTST and TFT at substantially lower profiled training cost. The aggregate accuracy gains are modest, and performance varies across tasks. The component controls give the clearest evidence for the approach: the correction improves the starting forecast itself. The pretrained models achieve stronger accuracy and require no downstream training.
 
